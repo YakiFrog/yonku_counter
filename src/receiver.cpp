@@ -59,8 +59,8 @@ static void notifyCallback(
                 continue; // 無効な数字はスキップ
         }
         
-        // 3秒以内の重複チェック
-        if (currentTime - lastReceiveTime[index] < 3000) {
+        // 2秒以内の重複チェック
+        if (currentTime - lastReceiveTime[index] < 2000) {
             // Serial.printf("数字 %c を3秒以内に受信しました - 無視します\n", number);
             continue;  // 次の文字の処理へ
         }
