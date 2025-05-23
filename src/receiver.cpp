@@ -21,6 +21,8 @@ bool deviceConnected = false;
 bool oldDeviceConnected = false;
 bool doConnect = false;
 BLEAddress* pServerAddress;
+String lastReceivedData = "";  // 前回受信したデータを保存
+unsigned long lastReceivedTime = 0;  // 前回データを受信した時刻
 
 // LED制御用変数
 unsigned long ledStartTime = 0;
@@ -38,8 +40,19 @@ static void notifyCallback(
     for (int i = 0; i < length; i++) {
         receivedData += (char)pData[i];
     }
-    // Serial.print("受信データ: ");
+
+    unsigned long currentTime = millis();
+    // 前回と同じデータの場合、3秒以上経過しているかチェック
+    if (receivedData == lastReceivedData) {
+        if (currentTime - lastReceivedTime < 3000) {  // 3秒以内の場合
+            return;  // 出力しない
+        }
+    }
+
+    // データを出力し、現在の情報を保存
     Serial.println(receivedData);
+    lastReceivedData = receivedData;
+    lastReceivedTime = currentTime;
 
     // LED点滅
     digitalWrite(LED_PIN, HIGH);
@@ -58,6 +71,8 @@ class MyClientCallback : public BLEClientCallbacks {
         // 切断時にLEDを消灯
         digitalWrite(LED_PIN, LOW);
         ledOn = false;
+        lastReceivedData = "";  // 前回データをリセット
+        lastReceivedTime = 0;   // 前回受信時刻をリセット
         Serial.println("サーバーから切断されました");
     }
 };
@@ -228,16 +243,5 @@ void loop() {
     // 予期しないLEDの点灯を防止
     digitalWrite(LED_PIN, LOW);
   }
-
-  // 接続状態を定期的に表示（2秒ごと）
-  static unsigned long lastStatusTime = 0;
-  const long statusInterval = 2000;  // ステータス表示間隔（ms）
-  
-//   if (currentMillis - lastStatusTime >= statusInterval) {
-//     lastStatusTime = currentMillis;
-//     Serial.print("接続状態: ");
-//     Serial.println(deviceConnected ? "接続中" : "未接続");
-//   }
-
-  delay(1);
+  // delay(1);
 }

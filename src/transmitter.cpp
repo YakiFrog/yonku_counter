@@ -166,6 +166,4 @@ void loop() {
     digitalWrite(LED_PIN, LOW);
     ledOn = false;
   }
-
-  delay(1); // タスク切り替えのため少し待つ
 }
