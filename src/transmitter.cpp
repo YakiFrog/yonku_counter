@@ -138,8 +138,8 @@ void loop() {
           pCharacteristic->notify();
           Serial.println("BLEへ送信しました");
           // もう一度
+          delay(100); // 100ms待機
           pCharacteristic->setValue(uartBuffer);
-          delay(10); // 100ms待機
           pCharacteristic->notify();
         }
         
