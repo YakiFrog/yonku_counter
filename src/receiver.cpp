@@ -11,6 +11,9 @@
 // LED設定
 #define LED_PIN 21  // 内蔵LED
 
+// シリアル通信用バッファ
+char inputBuffer[2];  // 1文字 + NULL終端
+
 // グローバル変数
 BLEClient* pClient = NULL;
 BLERemoteCharacteristic* pRemoteCharacteristic = NULL;
@@ -35,7 +38,7 @@ static void notifyCallback(
     for (int i = 0; i < length; i++) {
         receivedData += (char)pData[i];
     }
-    Serial.print("受信データ: ");
+    // Serial.print("受信データ: ");
     Serial.println(receivedData);
 
     // LED点滅
@@ -164,6 +167,25 @@ void setup() {
 
 void loop() {
   unsigned long currentMillis = millis();
+
+  // シリアル通信からの入力を確認
+  if (Serial.available() > 0) {
+    // 1文字読み取り
+    inputBuffer[0] = Serial.read();
+    inputBuffer[1] = '\0';  // NULL終端
+
+    // 接続中かつ有効な1文字の場合のみ送信
+    if (deviceConnected && isalpha(inputBuffer[0])) {
+      // BLE経由で送信
+      pRemoteCharacteristic->writeValue(inputBuffer);
+      Serial.printf("送信: %c\n", inputBuffer[0]);
+    }
+    
+    // バッファをクリア
+    while(Serial.available()) {
+      Serial.read();
+    }
+  }
 
   // 接続状態の変化を検出
   if (deviceConnected != oldDeviceConnected) {

@@ -42,11 +42,10 @@ class MyCallbacks: public BLECharacteristicCallbacks {
     
     if (value.length() == 1) {  // 1文字のみ許可
       char c = value[0];
-      Serial.print("BLEから受信: ");
       Serial.println(c);
       
       // UARTにBLEから受信したデータを送信
-      Serial2.print(c);
+      Serial2.println(c);
     }
   }
 };
