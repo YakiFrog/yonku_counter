@@ -134,9 +134,16 @@ void loop() {
           ledOn = true;
           ledStartTime = currentMillis;
           
-          pCharacteristic->setValue(uartBuffer);
+          // 1文字を2回繰り返して送信
+          char repeatedBuffer[3];  // 2文字 + null終端用
+          repeatedBuffer[0] = uartBuffer[0];  // 1回目
+          repeatedBuffer[1] = uartBuffer[0];  // 2回目
+          repeatedBuffer[2] = '\0';  // 文字列の終端
+          
+          pCharacteristic->setValue(repeatedBuffer);
           pCharacteristic->notify();
-          Serial.println("BLEへ送信しました");
+          Serial.print("BLEへ送信しました: ");
+          Serial.println(repeatedBuffer);
         }
         
         // バッファをリセット

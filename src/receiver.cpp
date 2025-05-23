@@ -21,8 +21,9 @@ bool deviceConnected = false;
 bool oldDeviceConnected = false;
 bool doConnect = false;
 BLEAddress* pServerAddress;
-String lastReceivedData = "";  // 前回受信したデータを保存
-unsigned long lastReceivedTime = 0;  // 前回データを受信した時刻
+
+// 各数字の最終受信時刻を記録
+unsigned long lastReceiveTime[4] = {0, 0, 0, 0};  // index 0=数字1, 1=数字2, 2=数字3, 3=数字4
 
 // LED制御用変数
 unsigned long ledStartTime = 0;
@@ -42,22 +43,39 @@ static void notifyCallback(
     }
 
     unsigned long currentTime = millis();
-    // 前回と同じデータの場合、3秒以上経過しているかチェック
-    if (receivedData == lastReceivedData) {
-        if (currentTime - lastReceivedTime < 3000) {  // 3秒以内の場合
-            return;  // 出力しない
+    
+    // 受信データを1文字ずつ処理
+    for (int i = 0; i < receivedData.length(); i++) {
+        char number = receivedData[i];
+        int index = -1;
+        
+        // 数字の判定とインデックスの設定
+        switch(number) {
+            case '1': index = 0; break;
+            case '2': index = 1; break;
+            case '3': index = 2; break;
+            case '4': index = 3; break;
+            default:
+                continue; // 無効な数字はスキップ
         }
+        
+        // 3秒以内の重複チェック
+        if (currentTime - lastReceiveTime[index] < 3000) {
+            // Serial.printf("数字 %c を3秒以内に受信しました - 無視します\n", number);
+            continue;  // 次の文字の処理へ
+        }
+        
+        // 時刻を更新して処理を続行
+        lastReceiveTime[index] = currentTime;
+        
+        // データを出力
+        Serial.println(String(number));
+
+        // LED点滅
+        digitalWrite(LED_PIN, HIGH);
+        ledOn = true;
+        ledStartTime = millis();
     }
-
-    // データを出力し、現在の情報を保存
-    Serial.println(receivedData);
-    lastReceivedData = receivedData;
-    lastReceivedTime = currentTime;
-
-    // LED点滅
-    digitalWrite(LED_PIN, HIGH);
-    ledOn = true;
-    ledStartTime = millis();
 }
 
 // 接続状態のコールバッククラス
@@ -71,8 +89,12 @@ class MyClientCallback : public BLEClientCallbacks {
         // 切断時にLEDを消灯
         digitalWrite(LED_PIN, LOW);
         ledOn = false;
-        lastReceivedData = "";  // 前回データをリセット
-        lastReceivedTime = 0;   // 前回受信時刻をリセット
+        
+        // 全ての数字の最終受信時刻をリセット
+        for(int i = 0; i < 4; i++) {
+            lastReceiveTime[i] = 0;
+        }
+        
         Serial.println("サーバーから切断されました");
     }
 };
