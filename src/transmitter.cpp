@@ -54,19 +54,19 @@ class MyCallbacks: public BLECharacteristicCallbacks {
 class MyServerCallbacks: public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) {
     deviceConnected = true;
-    Serial.println("デバイスが接続されました");
+    // Serial.println("デバイスが接続されました");
   }
   
   void onDisconnect(BLEServer* pServer) {
     deviceConnected = false;
-    Serial.println("デバイスが切断されました");
+    // Serial.println("デバイスが切断されました");
   }
 };
 
 void setup() {
   // シリアル通信の初期化（デバッグ用）
-  Serial.begin(115200);
-  Serial.println("BLEサーバーを開始します...");
+  // Serial.begin(115200);
+  // Serial.println("BLEサーバーを開始します...");
   
   // LED初期化
   pinMode(LED_PIN, OUTPUT);
@@ -151,14 +151,14 @@ void loop() {
   if (!deviceConnected && oldDeviceConnected) {
     delay(500); // Bluetoothスタックの準備時間
     pServer->startAdvertising(); // 再度アドバタイジングを開始
-    Serial.println("アドバタイジングを再開します");
+    // Serial.println("アドバタイジングを再開します");
     oldDeviceConnected = deviceConnected;
   }
   
   // 新しい接続があった場合の処理
   if (deviceConnected && !oldDeviceConnected) {
     oldDeviceConnected = deviceConnected;
-    Serial.println("新しい接続を検出しました");
+    // Serial.println("新しい接続を検出しました");
   }
   
   // LED制御の更新
