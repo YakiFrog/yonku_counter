@@ -21,8 +21,10 @@ bool deviceConnected = false;
 bool oldDeviceConnected = false;
 bool doConnect = false;
 BLEAddress* pServerAddress;
-String lastReceivedData = "";  // 前回受信したデータを保存
-unsigned long lastReceivedTime = 0;  // 前回データを受信した時刻
+
+// 各数字の最後の処理時刻を記録（1,2,3,4に対応）
+unsigned long lastProcessedTime[5] = {0, 0, 0, 0, 0};  // インデックス1-4を使用
+const unsigned long IGNORE_DURATION = 3000;  // 3秒間は同じ数字を無視
 
 // LED制御用変数
 unsigned long ledStartTime = 0;
@@ -42,17 +44,26 @@ static void notifyCallback(
     }
 
     unsigned long currentTime = millis();
-    // 前回と同じデータの場合、3秒以上経過しているかチェック
-    if (receivedData == lastReceivedData) {
-        if (currentTime - lastReceivedTime < 3000) {  // 3秒以内の場合
-            return;  // 出力しない
+    
+    // 受信したデータが1文字で、1-4の数字かチェック
+    if (receivedData.length() == 1) {
+        char receivedChar = receivedData.charAt(0);
+        if (receivedChar >= '1' && receivedChar <= '4') {
+            int digit = receivedChar - '0';  // 文字を数字に変換
+            
+            // 3秒以内に同じ数字を処理していたら無視
+            if (currentTime - lastProcessedTime[digit] < IGNORE_DURATION) {
+                // Serial.printf("数字 %d は3秒以内に処理済みのため無視します\n", digit);
+                return;  // 出力しない
+            }
+            
+            // 処理時刻を更新
+            lastProcessedTime[digit] = currentTime;
         }
     }
 
-    // データを出力し、現在の情報を保存
+    // データを出力
     Serial.println(receivedData);
-    lastReceivedData = receivedData;
-    lastReceivedTime = currentTime;
 
     // LED点滅
     digitalWrite(LED_PIN, HIGH);
@@ -71,8 +82,10 @@ class MyClientCallback : public BLEClientCallbacks {
         // 切断時にLEDを消灯
         digitalWrite(LED_PIN, LOW);
         ledOn = false;
-        lastReceivedData = "";  // 前回データをリセット
-        lastReceivedTime = 0;   // 前回受信時刻をリセット
+        // 各数字の処理時刻をリセット
+        for (int i = 1; i <= 4; i++) {
+            lastProcessedTime[i] = 0;
+        }
         Serial.println("サーバーから切断されました");
     }
 };
